@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recipe Box</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --sage-deep:#3c4a3a;
+    --sage:#6f8768;
+    --sage-soft:#e7ede2;
+    --cream:#faf8f3;
+    --clay:#b5744a;
+    --clay-soft:#f1ddce;
+    --ink:#2a2e27;
+    --danger:#a15046;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  body{
+    background:var(--cream);
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:40px;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    background:var(--sage-deep);
+    color:var(--cream);
+    padding:20px 20px 30px;
+    position:relative;
+  }
+  .topbar::after{
+    content:"";
+    position:absolute;
+    bottom:-1px; left:0; right:0;
+    height:10px;
+    background:var(--sage);
+    clip-path:polygon(0 100%, 4% 0, 8% 100%, 12% 0, 16% 100%, 20% 0, 24% 100%, 28% 0, 32% 100%, 36% 0, 40% 100%, 44% 0, 48% 100%, 52% 0, 56% 100%, 60% 0, 64% 100%, 68% 0, 72% 100%, 76% 0, 80% 100%, 84% 0, 88% 100%, 92% 0, 96% 100%, 100% 0, 100% 100%);
+  }
+  .eyebrow{
+    font-size:10.5px;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--sage-soft);
+    font-weight:600;
+    margin-bottom:4px;
+  }
+  .topbar h1{
+    font-family:'Fraunces',serif;
+    font-size:26px;
+    font-weight:700;
+  }
+  .topbar .sub{
+    font-size:12px;
+    color:#cdd8c8;
+    margin-top:4px;
+  }
+
+  /* ---------- Layout wrapper ---------- */
+  .wrap{
+    max-width:460px;
+    margin:0 auto;
+    padding:0 16px;
+  }
+
+  /* ---------- Search + add ---------- */
+  .controls{
+    display:flex;
+    gap:8px;
+    margin-top:18px;
+    margin-bottom:18px;
+  }
+  .search{
+    flex:1;
+    min-width:0;
+    background:#fff;
+    border:1px solid var(--sage-soft);
+    border-radius:12px;
+    padding:11px 14px;
+    font-size:13.5px;
+    font-family:'Inter',sans-serif;
+    box-shadow:0 2px 8px rgba(60,74,58,0.08);
+  }
+  .search:focus{ outline:2px solid var(--sage); outline-offset:1px; }
+
+  .add-btn{
+    background:var(--clay);
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    padding:0 18px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(181,116,74,0.3);
+    transition:transform .12s ease;
+  }
+  .add-btn:hover{ transform:translateY(-1px); }
+  .add-btn:focus-visible{ outline:2px solid var(--sage-deep); outline-offset:2px; }
+
+  .scan-btn{
+    background:#fff;
+    color:var(--sage-deep);
+    border:1px solid var(--sage-soft);
+    border-radius:12px;
+    width:44px;
+    font-size:17px;
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(60,74,58,0.08);
+    transition:transform .12s ease;
+  }
+  .scan-btn:hover{ transform:translateY(-1px); }
+  .scan-btn:focus-visible{ outline:2px solid var(--sage-deep); outline-offset:2px; }
+  .scan-btn:disabled{ opacity:0.5; cursor:default; transform:none; }
+
+  .scan-status{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--clay-soft);
+    color:var(--clay);
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:12.5px;
+    font-weight:600;
+    margin-bottom:14px;
+  }
+  .scan-status.error{
+    background:#f6e2df;
+    color:var(--danger);
+  }
+  .spinner{
+    width:13px; height:13px;
+    border:2px solid rgba(181,116,74,0.3);
+    border-top-color:var(--clay);
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+    flex-shrink:0;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* ---------- Recipe list ---------- */
+  .list{
+    display:grid;
+    gap:10px;
+  }
+
+  .recipe-tile{
+    background:#fff;
+    border:1px solid var(--sage-soft);
+    border-radius:14px;
+    padding:14px 16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    cursor:pointer;
+    box-shadow:0 1px 3px rgba(60,74,58,0.06);
+    transition:box-shadow .12s ease, transform .12s ease;
+  }
+  .recipe-tile:hover{ box-shadow:0 4px 14px rgba(60,74,58,0.12); transform:translateY(-1px); }
+  .recipe-tile:focus-visible{ outline:2px solid var(--sage); outline-offset:2px; }
+
+  .tile-title{
+    font-family:'Fraunces',serif;
+    font-size:16.5px;
+    font-weight:700;
+    color:var(--sage-deep);
+    line-height:1.25;
+  }
+  .tile-sub{
+    font-size:11.5px;
+    color:#8a9384;
+    margin-top:2px;
+  }
+  .tile-arrow{
+    font-size:18px;
+    color:var(--sage);
+    flex-shrink:0;
+  }
+
+  .empty-state{
+    text-align:center;
+    padding:50px 20px;
+    color:#8a9384;
+  }
+  .empty-state .icon{ font-size:34px; margin-bottom:10px; }
+  .empty-state p{ font-size:13.5px; line-height:1.5; }
+
+  .loading{
+    text-align:center;
+    padding:40px 20px;
+    font-size:13px;
+    color:#8a9384;
+  }
+
+  /* ---------- Recipe card (detail view) ---------- */
+  .card{
+    background:#fff;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 1px 3px rgba(60,74,58,0.08);
+    border:1px solid var(--sage-soft);
+  }
+
+  .card-header{
+    background:var(--sage-deep);
+    color:var(--cream);
+    padding:18px 20px 16px;
+  }
+  .card-header h2{
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    font-weight:700;
+    line-height:1.15;
+  }
+  .card-header .sub{
+    font-size:12px;
+    color:#cdd8c8;
+    margin-top:4px;
+  }
+
+  .card-body{ padding:16px 20px 20px; }
+
+  .section-label{
+    font-family:'Fraunces',serif;
+    font-size:13px;
+    font-weight:600;
+    color:var(--clay);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin-bottom:8px;
+    padding-top:14px;
+    border-top:1px solid var(--sage-soft);
+  }
+  .card-body > .section-label:first-child{ border-top:none; padding-top:0; }
+
+  .ingredients{ list-style:none; display:grid; gap:5px; }
+  .ingredients li{ font-size:13.5px; display:flex; gap:8px; line-height:1.35; }
+  .ingredients li::before{ content:"•"; color:var(--sage); font-weight:700; flex-shrink:0; }
+  .amt{ font-weight:600; color:var(--sage-deep); white-space:nowrap; }
+
+  .steps{ display:grid; gap:8px; }
+  .step{ display:flex; gap:10px; align-items:baseline; font-size:13px; line-height:1.4; }
+  .num{
+    flex-shrink:0; width:20px; height:20px; border-radius:50%;
+    background:var(--sage-soft); color:var(--sage-deep);
+    font-family:'Fraunces',serif; font-weight:700; font-size:11px;
+    display:flex; align-items:center; justify-content:center;
+    transform:translateY(2px);
+  }
+  .step b{ color:var(--ink); font-weight:600; }
+  .timer{ color:var(--clay); font-weight:600; font-size:11.5px; }
+
+  .footer-note{
+    margin-top:14px; padding:10px 12px;
+    background:var(--sage-soft); border-radius:10px;
+    font-size:11.5px; color:var(--sage-deep); line-height:1.4;
+  }
+
+  /* ---------- Detail action bar ---------- */
+  .action-bar{
+    display:flex; gap:8px; margin:14px 0 18px;
+  }
+  .back-btn, .edit-btn, .del-btn{
+    border:none; border-radius:10px; padding:9px 14px;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px;
+    cursor:pointer;
+  }
+  .back-btn{ background:var(--sage-soft); color:var(--sage-deep); }
+  .edit-btn{ background:var(--clay-soft); color:var(--clay); }
+  .del-btn{ background:#f6e2df; color:var(--danger); margin-left:auto; }
+  .back-btn:focus-visible, .edit-btn:focus-visible, .del-btn:focus-visible{ outline:2px solid var(--sage-deep); outline-offset:2px; }
+
+  /* ---------- Form ---------- */
+  .form-card{
+    background:#fff; border:1px solid var(--sage-soft); border-radius:16px;
+    padding:18px; margin-top:14px;
+  }
+  .form-card label{
+    display:block; font-size:11px; font-weight:600; letter-spacing:0.04em;
+    text-transform:uppercase; color:var(--sage-deep); margin-bottom:5px; margin-top:14px;
+  }
+  .form-card label:first-of-type{ margin-top:0; }
+  .form-card input[type=text], .form-card input[type=number], .form-card textarea{
+    width:100%; border:1px solid var(--sage-soft); border-radius:10px;
+    padding:9px 12px; font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink);
+  }
+  .form-card input:focus, .form-card textarea:focus{ outline:2px solid var(--sage); outline-offset:1px; }
+  .form-card textarea{ resize:vertical; min-height:44px; }
+
+  .row-group{ display:grid; gap:8px; margin-top:6px; }
+  .ing-row, .step-row{
+    display:grid; gap:6px;
+    background:var(--cream); border:1px solid var(--sage-soft); border-radius:10px;
+    padding:10px;
+    position:relative;
+  }
+  .ing-row{ grid-template-columns:1fr 2fr auto; align-items:center; }
+  .ing-row input{ padding:7px 9px; font-size:13px; }
+  .step-row .step-top{ display:flex; gap:6px; align-items:center; }
+  .step-row .step-top input[type=text]{ flex:1; }
+  .step-row textarea{ margin-top:6px; }
+
+  .row-remove{
+    background:none; border:none; color:var(--danger); font-size:16px;
+    cursor:pointer; line-height:1; padding:4px;
+  }
+
+  .add-row-btn{
+    background:none; border:1px dashed var(--sage); color:var(--sage-deep);
+    border-radius:10px; padding:8px; font-size:12.5px; font-weight:600;
+    cursor:pointer; margin-top:8px; width:100%;
+  }
+  .add-row-btn:focus-visible{ outline:2px solid var(--sage-deep); outline-offset:2px; }
+
+  .form-actions{
+    display:flex; gap:8px; margin-top:20px;
+  }
+  .save-btn{
+    flex:1; background:var(--sage-deep); color:#fff; border:none;
+    border-radius:10px; padding:12px; font-family:'Inter',sans-serif;
+    font-weight:700; font-size:13.5px; cursor:pointer;
+  }
+  .cancel-btn{
+    background:var(--sage-soft); color:var(--sage-deep); border:none;
+    border-radius:10px; padding:12px 16px; font-family:'Inter',sans-serif;
+    font-weight:600; font-size:13.5px; cursor:pointer;
+  }
+  .save-btn:focus-visible, .cancel-btn:focus-visible{ outline:2px solid var(--sage-deep); outline-offset:2px; }
+
+  .hint{ font-size:11px; color:#8a9384; margin-top:4px; }
+
+  [hidden]{ display:none !important; }
+
+  @media (prefers-reduced-motion: reduce){
+    .recipe-tile, .add-btn{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="eyebrow">Your Kitchen</div>
+    <h1>Recipe Box</h1>
+    <div class="sub">Saved recipes, all in one place</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- LIST VIEW -->
+  <div id="listView">
+    <div class="controls">
+      <input class="search" id="searchInput" type="text" placeholder="Search recipes...">
+      <button class="scan-btn" id="scanBtn" title="Add from screenshot">📷</button>
+      <button class="scan-btn" id="keyBtn" title="Set Anthropic API key">🔑</button>
+      <button class="add-btn" id="addBtn">+ Add</button>
+    </div>
+    <input type="file" id="scanFileInput" accept="image/*" hidden>
+    <div id="scanStatus" class="scan-status" hidden></div>
+    <div id="listContainer" class="list"></div>
+  </div>
+
+  <!-- DETAIL VIEW -->
+  <div id="detailView" hidden>
+    <div class="action-bar">
+      <button class="back-btn" id="backBtn">← All recipes</button>
+      <button class="edit-btn" id="editBtn">Edit</button>
+      <button class="del-btn" id="delBtn">Delete</button>
+    </div>
+    <div class="card" id="detailCard"></div>
+  </div>
+
+  <!-- FORM VIEW -->
+  <div id="formView" hidden>
+    <div class="action-bar">
+      <button class="back-btn" id="formBackBtn">← Cancel</button>
+    </div>
+    <div class="form-card">
+      <label for="fTitle">Recipe title</label>
+      <input type="text" id="fTitle" placeholder="e.g. Protein Balls">
+
+      <label for="fSub">Subtitle / tags</label>
+      <input type="text" id="fSub" placeholder="e.g. Beach Culture style, no-bake">
+
+      <label for="fServings">Servings</label>
+      <input type="text" id="fServings" placeholder="e.g. Makes 12">
+
+      <label>Ingredients</label>
+      <div class="row-group" id="ingRows"></div>
+      <button class="add-row-btn" id="addIngBtn" type="button">+ Add ingredient</button>
+
+      <label>Steps</label>
+      <div class="row-group" id="stepRows"></div>
+      <button class="add-row-btn" id="addStepBtn" type="button">+ Add step</button>
+
+      <label for="fNote">Storage / notes</label>
+      <textarea id="fNote" placeholder="e.g. Store airtight in the fridge up to 1 week."></textarea>
+
+      <div class="form-actions">
+        <button class="cancel-btn" id="formCancelBtn" type="button">Cancel</button>
+        <button class="save-btn" id="saveBtn" type="button">Save recipe</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'recipes';
+  let recipes = [];
+  let currentId = null;   // for detail view
+  let editingId = null;   // for form view (null = new)
+
+  const listContainer = document.getElementById('listContainer');
+  const listView = document.getElementById('listView');
+  const detailView = document.getElementById('detailView');
+  const detailCard = document.getElementById('detailCard');
+  const formView = document.getElementById('formView');
+  const searchInput = document.getElementById('searchInput');
+
+  // ---------- storage helpers (localStorage, for offline/self-hosted use) ----------
+  async function loadRecipes(){
+    listContainer.innerHTML = '<div class="loading">Loading your recipes…</div>';
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      recipes = raw ? JSON.parse(raw) : [];
+    }catch(e){
+      console.error('Could not read recipes from localStorage', e);
+      recipes = [];
+    }
+    renderList();
+  }
+
+  async function saveRecipes(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+    }catch(e){
+      console.error('Storage error while saving recipes', e);
+      alert('Could not save — your browser storage may be full or disabled (e.g. private browsing).');
+    }
+  }
+
+  function uid(){ return 'r' + Date.now() + Math.random().toString(36).slice(2,7); }
+
+  // ---------- list view ----------
+  function renderList(){
+    const q = searchInput.value.trim().toLowerCase();
+    const filtered = recipes.filter(r =>
+      !q || r.title.toLowerCase().includes(q) || (r.sub||'').toLowerCase().includes(q)
+    );
+
+    if(recipes.length === 0){
+      listContainer.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🍲</div>
+          <p>No recipes yet.<br>Tap "+ Add" to save your first one.</p>
+        </div>`;
+      return;
+    }
+    if(filtered.length === 0){
+      listContainer.innerHTML = `<div class="empty-state"><p>No recipes match "${escapeHtml(searchInput.value)}".</p></div>`;
+      return;
+    }
+
+    listContainer.innerHTML = filtered.map(r => `
+      <div class="recipe-tile" tabindex="0" data-id="${r.id}">
+        <div>
+          <div class="tile-title">${escapeHtml(r.title)}</div>
+          <div class="tile-sub">${escapeHtml(r.sub || '')}${r.servings ? ' · ' + escapeHtml(r.servings) : ''}</div>
+        </div>
+        <div class="tile-arrow">›</div>
+      </div>
+    `).join('');
+
+    listContainer.querySelectorAll('.recipe-tile').forEach(el=>{
+      el.addEventListener('click', ()=> openDetail(el.dataset.id));
+      el.addEventListener('keypress', (e)=>{ if(e.key === 'Enter') openDetail(el.dataset.id); });
+    });
+  }
+
+  function escapeHtml(s){
+    return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ---------- detail view ----------
+  function openDetail(id){
+    currentId = id;
+    const r = recipes.find(x => x.id === id);
+    if(!r) return;
+
+    const ingHtml = (r.ingredients||[]).map(i =>
+      `<li>${i.amt ? `<span class="amt">${escapeHtml(i.amt)}</span> ` : ''}${escapeHtml(i.name)}</li>`
+    ).join('');
+
+    const stepHtml = (r.steps||[]).map((s, idx) => `
+      <div class="step">
+        <span class="num">${idx+1}</span>
+        <span>${s.title ? `<b>${escapeHtml(s.title)}:</b> ` : ''}${escapeHtml(s.desc||'')}${s.timer ? ` <span class="timer">(${escapeHtml(s.timer)})</span>` : ''}</span>
+      </div>
+    `).join('');
+
+    detailCard.innerHTML = `
+      <div class="card-header">
+        <h2>${escapeHtml(r.title)}</h2>
+        <div class="sub">${escapeHtml(r.sub || '')}${r.servings ? ' · ' + escapeHtml(r.servings) : ''}</div>
+      </div>
+      <div class="card-body">
+        ${ingHtml ? `<div class="section-label">Ingredients</div><ul class="ingredients">${ingHtml}</ul>` : ''}
+        ${stepHtml ? `<div class="section-label">Steps</div><div class="steps">${stepHtml}</div>` : ''}
+        ${r.note ? `<div class="footer-note">${escapeHtml(r.note)}</div>` : ''}
+      </div>
+    `;
+
+    listView.hidden = true;
+    formView.hidden = true;
+    detailView.hidden = false;
+  }
+
+  document.getElementById('backBtn').addEventListener('click', ()=>{
+    detailView.hidden = true;
+    listView.hidden = false;
+  });
+
+  document.getElementById('delBtn').addEventListener('click', async ()=>{
+    if(!currentId) return;
+    if(!confirm('Delete this recipe? This cannot be undone.')) return;
+    recipes = recipes.filter(r => r.id !== currentId);
+    await saveRecipes();
+    detailView.hidden = true;
+    listView.hidden = false;
+    renderList();
+  });
+
+  document.getElementById('editBtn').addEventListener('click', ()=>{
+    openForm(currentId);
+  });
+
+  // ---------- form view ----------
+  const ingRows = document.getElementById('ingRows');
+  const stepRows = document.getElementById('stepRows');
+
+  function makeIngRow(amt='', name=''){
+    const row = document.createElement('div');
+    row.className = 'ing-row';
+    row.innerHTML = `
+      <input type="text" class="ing-amt" placeholder="1 cup" value="${escapeHtml(amt)}">
+      <input type="text" class="ing-name" placeholder="ingredient name" value="${escapeHtml(name)}">
+      <button type="button" class="row-remove" title="Remove">✕</button>
+    `;
+    row.querySelector('.row-remove').addEventListener('click', ()=> row.remove());
+    return row;
+  }
+
+  function makeStepRow(title='', desc='', timer=''){
+    const row = document.createElement('div');
+    row.className = 'step-row';
+    row.innerHTML = `
+      <div class="step-top">
+        <input type="text" class="step-title" placeholder="Step title (e.g. Pulse oats)" value="${escapeHtml(title)}">
+        <input type="text" class="step-timer" placeholder="Timer e.g. 20:00" value="${escapeHtml(timer)}" style="max-width:100px;">
+        <button type="button" class="row-remove" title="Remove">✕</button>
+      </div>
+      <textarea class="step-desc" placeholder="Step details...">${escapeHtml(desc)}</textarea>
+    `;
+    row.querySelector('.row-remove').addEventListener('click', ()=> row.remove());
+    return row;
+  }
+
+  document.getElementById('addIngBtn').addEventListener('click', ()=> ingRows.appendChild(makeIngRow()));
+  document.getElementById('addStepBtn').addEventListener('click', ()=> stepRows.appendChild(makeStepRow()));
+
+  function openForm(id){
+    editingId = id || null;
+    const r = id ? recipes.find(x => x.id === id) : null;
+
+    document.getElementById('fTitle').value = r ? r.title : '';
+    document.getElementById('fSub').value = r ? (r.sub||'') : '';
+    document.getElementById('fServings').value = r ? (r.servings||'') : '';
+    document.getElementById('fNote').value = r ? (r.note||'') : '';
+
+    ingRows.innerHTML = '';
+    stepRows.innerHTML = '';
+
+    if(r && r.ingredients && r.ingredients.length){
+      r.ingredients.forEach(i => ingRows.appendChild(makeIngRow(i.amt, i.name)));
+    } else {
+      ingRows.appendChild(makeIngRow());
+    }
+
+    if(r && r.steps && r.steps.length){
+      r.steps.forEach(s => stepRows.appendChild(makeStepRow(s.title, s.desc, s.timer)));
+    } else {
+      stepRows.appendChild(makeStepRow());
+    }
+
+    listView.hidden = true;
+    detailView.hidden = true;
+    formView.hidden = false;
+    document.getElementById('fTitle').focus();
+  }
+
+  document.getElementById('addBtn').addEventListener('click', ()=> openForm(null));
+
+  // ---------- API key (needed for scan feature when self-hosted) ----------
+  const API_KEY_STORAGE = 'anthropic_api_key';
+  const keyBtn = document.getElementById('keyBtn');
+
+  function getApiKey(){
+    try{ return localStorage.getItem(API_KEY_STORAGE) || ''; }catch(e){ return ''; }
+  }
+
+  keyBtn.addEventListener('click', ()=>{
+    const current = getApiKey();
+    const entered = prompt(
+      'Paste your Anthropic API key to enable "scan from screenshot".\n\n' +
+      'Get one at console.anthropic.com. It is stored only in this browser\'s local storage, ' +
+      'never sent anywhere except directly to Anthropic\'s API.\n\n' +
+      '⚠️ Since this key lives in your browser, do not use this feature on a shared or public computer, ' +
+      'and only paste your key on a device you trust.',
+      current
+    );
+    if(entered === null) return; // cancelled
+    try{
+      if(entered.trim()){
+        localStorage.setItem(API_KEY_STORAGE, entered.trim());
+        alert('API key saved. The scan button will now work.');
+      } else {
+        localStorage.removeItem(API_KEY_STORAGE);
+        alert('API key cleared.');
+      }
+    }catch(e){
+      alert('Could not save the key — local storage may be disabled.');
+    }
+  });
+
+  // ---------- scan-from-screenshot ----------
+  const scanBtn = document.getElementById('scanBtn');
+  const scanFileInput = document.getElementById('scanFileInput');
+  const scanStatus = document.getElementById('scanStatus');
+
+  scanBtn.addEventListener('click', ()=> scanFileInput.click());
+
+  function setScanStatus(msg, isError){
+    if(!msg){ scanStatus.hidden = true; return; }
+    scanStatus.hidden = false;
+    scanStatus.classList.toggle('error', !!isError);
+    scanStatus.innerHTML = isError ? msg : `<span class="spinner"></span>${msg}`;
+  }
+
+  function fileToBase64(file){
+    return new Promise((resolve, reject)=>{
+      const r = new FileReader();
+      r.onload = ()=> resolve(r.result.split(',')[1]);
+      r.onerror = ()=> reject(new Error('Could not read that image.'));
+      r.readAsDataURL(file);
+    });
+  }
+
+  scanFileInput.addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    scanFileInput.value = ''; // allow re-selecting same file later
+    if(!file) return;
+
+    const apiKey = getApiKey();
+    if(!apiKey){
+      setScanStatus('Tap 🔑 first to add your Anthropic API key.', true);
+      return;
+    }
+
+    scanBtn.disabled = true;
+    setScanStatus('Reading the screenshot…', false);
+
+    try{
+      const base64Data = await fileToBase64(file);
+      const mediaType = file.type || 'image/jpeg';
+
+      setScanStatus('Pulling out the recipe…', false);
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
+              { type: 'text', text: 'Look at this recipe screenshot/photo and extract the recipe. Respond with ONLY a raw JSON object, no markdown fences, no preamble, in exactly this shape:\n{"title": "...", "sub": "short subtitle or tags, or empty string", "servings": "e.g. Makes 12, or empty string", "ingredients": [{"amt": "1 cup", "name": "ingredient name"}], "steps": [{"title": "short step title", "desc": "step details", "timer": "e.g. 20:00 or empty string"}], "note": "storage/notes, or empty string"}\nIf exact ingredient amounts are not visible or given, make a sensible estimate and keep the fields populated rather than leaving them blank. If steps are not spelled out, infer a reasonable set of steps from the ingredient list and any visible instructions. Keep step titles short (2-4 words).' }
+            ]
+          }]
+        })
+      });
+
+      if(!response.ok){
+        if(response.status === 401){
+          throw new Error('That API key was rejected. Tap 🔑 to check it.');
+        }
+        throw new Error('The extraction service had a problem (status ' + response.status + ').');
+      }
+
+      const data = await response.json();
+      const textBlock = (data.content || []).find(b => b.type === 'text');
+      if(!textBlock || !textBlock.text){
+        throw new Error('No recipe text came back from that image.');
+      }
+
+      const cleaned = textBlock.text.replace(/```json|```/g, '').trim();
+      let parsed;
+      try{
+        parsed = JSON.parse(cleaned);
+      }catch(err){
+        throw new Error('Could not read the recipe from that image clearly. Try a clearer or closer screenshot.');
+      }
+
+      setScanStatus('Got it — review before saving.', false);
+      setTimeout(()=> setScanStatus(null), 2500);
+
+      // Pre-fill the form with extracted data for review
+      editingId = null;
+      document.getElementById('fTitle').value = parsed.title || '';
+      document.getElementById('fSub').value = parsed.sub || '';
+      document.getElementById('fServings').value = parsed.servings || '';
+      document.getElementById('fNote').value = parsed.note || '';
+
+      ingRows.innerHTML = '';
+      stepRows.innerHTML = '';
+
+      const ings = Array.isArray(parsed.ingredients) ? parsed.ingredients : [];
+      if(ings.length){
+        ings.forEach(i => ingRows.appendChild(makeIngRow(i.amt || '', i.name || '')));
+      } else {
+        ingRows.appendChild(makeIngRow());
+      }
+
+      const stps = Array.isArray(parsed.steps) ? parsed.steps : [];
+      if(stps.length){
+        stps.forEach(s => stepRows.appendChild(makeStepRow(s.title || '', s.desc || '', s.timer || '')));
+      } else {
+        stepRows.appendChild(makeStepRow());
+      }
+
+      listView.hidden = true;
+      detailView.hidden = true;
+      formView.hidden = false;
+
+    }catch(err){
+      console.error('Scan error', err);
+      setScanStatus((err && err.message) ? err.message : 'Something went wrong reading that image. Please try again.', true);
+    }finally{
+      scanBtn.disabled = false;
+    }
+  });
+
+  function closeForm(){
+    formView.hidden = true;
+    if(editingId){
+      detailView.hidden = false;
+    } else {
+      listView.hidden = false;
+    }
+  }
+  document.getElementById('formBackBtn').addEventListener('click', closeForm);
+  document.getElementById('formCancelBtn').addEventListener('click', closeForm);
+
+  document.getElementById('saveBtn').addEventListener('click', async ()=>{
+    const title = document.getElementById('fTitle').value.trim();
+    if(!title){
+      alert('Please give the recipe a title.');
+      return;
+    }
+
+    const ingredients = Array.from(ingRows.querySelectorAll('.ing-row')).map(row => ({
+      amt: row.querySelector('.ing-amt').value.trim(),
+      name: row.querySelector('.ing-name').value.trim()
+    })).filter(i => i.name);
+
+    const steps = Array.from(stepRows.querySelectorAll('.step-row')).map(row => ({
+      title: row.querySelector('.step-title').value.trim(),
+      desc: row.querySelector('.step-desc').value.trim(),
+      timer: row.querySelector('.step-timer').value.trim()
+    })).filter(s => s.title || s.desc);
+
+    const data = {
+      id: editingId || uid(),
+      title,
+      sub: document.getElementById('fSub').value.trim(),
+      servings: document.getElementById('fServings').value.trim(),
+      ingredients,
+      steps,
+      note: document.getElementById('fNote').value.trim()
+    };
+
+    if(editingId){
+      const idx = recipes.findIndex(r => r.id === editingId);
+      if(idx >= 0) recipes[idx] = data; else recipes.push(data);
+    } else {
+      recipes.push(data);
+    }
+
+    await saveRecipes();
+    formView.hidden = true;
+
+    if(editingId){
+      currentId = editingId;
+      openDetail(editingId);
+    } else {
+      currentId = data.id;
+      listView.hidden = false;
+      renderList();
+    }
+  });
+
+  searchInput.addEventListener('input', renderList);
+
+  loadRecipes();
+})();
+</script>
+
+</body>
+</html>
